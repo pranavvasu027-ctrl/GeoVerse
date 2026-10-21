@@ -1,0 +1,64 @@
+# Local workspace clones & migration artifacts (preserved locally, excluded from repository)
+/lulc-p1-p6/
+/Smart-root-optimizer/
+/geoverse-ai/
+geoverse-ai.zip
+temp_geoverse_backup/
+/MODEL_1_PROGRESS_AUDIT.md
+/MODEL_1_REASSESSMENT_REPORT.md
+/Pune_EO_Research_Synopsis*.pdf
+/Pune_EO_visual_tour.pdf
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extensions & build directories
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Testing caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment secrets & credentials
+.env
+*.env
+*.pem
+*.key
+*.p12
+
+# Local application storage backups
+models/model-1-lulc-urban-growth/labeling_app/storage/backups/*
+
+# IDE and Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+{
+  "timestamp_utc": "2026-10-21T08:16:04.662885+00:00",
+  "total_samples": 699,
+  "total_manifest_samples": 699,
+  "fully_labeled": 0,
+  "fully_labeled_samples": 0,
+  "partially_labeled": 1,
+  "partially_labeled_samples": 1,
+  "unlabeled": 698,
+  "unlabeled_samples": 698,
+  "duplicate_manifest_ids": [],
+  "validation_errors_count": 0,
+  "rejected_records": [],
+  "is_complete_final_dataset": false
+}

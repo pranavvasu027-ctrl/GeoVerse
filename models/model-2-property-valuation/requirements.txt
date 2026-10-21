@@ -1,0 +1,13 @@
+flask==3.0.3
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+xgboost==2.1.1
+shap==0.46.0
+geopandas==0.14.4
+folium==0.17.0
+mysql-connector-python==9.0.0
+SQLAlchemy==2.0.32
+python-dotenv==1.0.1
+joblib==1.4.2
+plotly==5.23.0

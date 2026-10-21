@@ -1,0 +1,17 @@
+{
+  "T2-0002": {
+    "updated_at": "2026-10-21T08:15:49.741388+00:00",
+    "epochs": {
+      "2020": {
+        "status": "done",
+        "dominant_class": "ambiguous",
+        "dominant_share_3bins": "50-75",
+        "second_class": "agriculture",
+        "confidence_1to3": 2,
+        "imagery_source": "Landsat_context",
+        "imagery_date": "2021-12-28",
+        "notes": ""
+      }
+    }
+  }
+}

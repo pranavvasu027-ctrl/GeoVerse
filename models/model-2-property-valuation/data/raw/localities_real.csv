@@ -1,0 +1,11 @@
+locality_id,locality_name,latitude,longitude,zone,distance_to_metro_km,nearest_metro_station,distance_to_highway_km,nearest_highway,distance_to_it_hub_km,nearest_it_hub,schools_nearby,hospitals_nearby,commercial_density,poi_data_source,infrastructure_score
+1,Hinjawadi,18.5908,73.7392,West Pune,7.71,PCMC,2.45,Old Mumbai-Pune Highway (Wakad),0.06,Hinjawadi IT Park,14,6,45,osm_fallback_snapshot,37.68
+2,Wakad,18.5974,73.7629,West Pune,5.29,PCMC,0.23,Old Mumbai-Pune Highway (Wakad),2.62,Hinjawadi IT Park,22,10,68,osm_fallback_snapshot,58.51
+3,Baner,18.559,73.7868,West Pune,6.69,Vanaz,5.17,Old Mumbai-Pune Highway (Wakad),6.2,Hinjawadi IT Park,26,12,82,osm_fallback_snapshot,49.36
+4,Balewadi,18.573,73.777,West Pune,6.75,PCMC,3.3,Old Mumbai-Pune Highway (Wakad),4.5,Hinjawadi IT Park,18,8,55,osm_fallback_snapshot,38.05
+5,Kharadi,18.5515,73.943,East Pune,2.99,Ramwadi,5.7,Pune-Solapur Highway (Hadapsar junction),0.35,EON IT Park Kharadi,20,9,71,osm_fallback_snapshot,66.98
+6,Hadapsar,18.5089,73.926,East Pune,5.5,Ramwadi,1.31,Pune-Solapur Highway (Hadapsar junction),0.87,Magarpatta City,24,14,76,osm_fallback_snapshot,66.51
+7,Viman Nagar,18.5679,73.9143,East Pune,1.18,Ramwadi,7.77,Pune-Solapur Highway (Hadapsar junction),3.27,EON IT Park Kharadi,21,11,79,osm_fallback_snapshot,70.52
+8,Kothrud,18.5074,73.8077,South-West Pune,0.57,Vanaz,11.26,Old Mumbai-Pune Highway (Wakad),11.82,Hinjawadi IT Park,30,16,90,osm_fallback_snapshot,62.78
+9,Wagholi,18.5788,73.9807,East Pune,7.3,Ramwadi,9.92,Pune-Solapur Highway (Hadapsar junction),5.31,EON IT Park Kharadi,11,5,38,osm_fallback_snapshot,16.65
+10,Pimpri-Chinchwad,18.6298,73.7997,PCMC,0.0,PCMC,4.43,Mumbai-Pune Expressway (Dehu Road entry),7.71,Hinjawadi IT Park,28,15,84,osm_fallback_snapshot,76.12
