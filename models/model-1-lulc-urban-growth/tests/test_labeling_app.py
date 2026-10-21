@@ -1,9 +1,14 @@
 import pytest
 import os
+import sys
 import json
 import shutil
 import tempfile
 from datetime import datetime
+from pathlib import Path
+
+MODEL1_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(MODEL1_DIR))
 
 from labeling_app.schema import (
     validate_epoch_annotation,

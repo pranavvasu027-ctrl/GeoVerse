@@ -37,6 +37,7 @@ def test_pune_map_csv_integrity():
             assert float(row["Time"]) > 0
             assert float(row["Carbon"]) >= 0
 
+@pytest.mark.skipif(sys.platform != "win32", reason="RouteOptimizer_Web.exe is a Windows executable")
 def test_route_optimizer_binary_execution():
     exe_path = MODEL3_DIR / "RouteOptimizer_Web.exe"
     assert exe_path.exists(), "RouteOptimizer_Web.exe not found"

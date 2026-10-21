@@ -59,6 +59,7 @@ GeoVerse/
     ├── model-2-property-valuation/# Model 2: Property Valuation Engine
     │   ├── README.md              # Data provenance, synthetic formula documentation
     │   ├── requirements.txt       # Dependencies
+    │   ├── reports/               # Comprehensive progress audit and model status report
     │   ├── src/                   # Feature extraction & dataset generation pipelines
     │   ├── data/                  # Raw locality coordinates and master training tables
     │   └── tests/                 # Automated test suite (6 tests)
@@ -93,7 +94,7 @@ To maintain scientific integrity and transparency, the verified status of each m
 | Component | Code Implementation | Datasets & Infrastructure | Verification Status | Notes |
 | :--- | :---: | :---: | :---: | :--- |
 | **Model 1: LULC Growth** | Complete (Labeling Tool & Protocols) | Samples Ready (1,340 pts); 0 Human Annotations Completed | **Partially Ready (Not Training Ready)** | Confirmatory experiments (C1–C6) are fail-closed (`DO NOT RUN`) until human visual interpretation is completed. Protected evaluator keys are strictly excluded. |
-| **Model 2: Property Valuation** | Complete (Data Pipeline & Math) | Real Coordinates + Documented Formulas | **Verified & Ready** | Uses real Pune Metro/highway coordinates; price history is synthetic with documented formulas pending licensed transaction records. |
+| **Model 2: Property Valuation** | Data Pipeline & Feature Engineering Complete; Model Training & Inference Pending | Real Coordinates + Documented Formulas | **Verified Data Pipeline (Not Training Ready)** | Feature engineering pipeline and real coordinates are operational; model training code (`train.py`, ML models) not yet implemented. Full audit in `reports/MODEL_2_PROGRESS_AUDIT.md`. |
 | **Model 3: Smart Root Optimizer** | Complete (C++ Engine + REST Service) | 63 Nodes & Transit Edges Verified | **Verified & Operational** | Solves point-to-point and multi-stop TSP routes in sub-millisecond time. Evaluated for Model 3 accessibility feature extraction. |
 
 ---
@@ -116,9 +117,10 @@ source venv/bin/activate
 
 ### Running All Automated Tests
 ```bash
-# On Windows PowerShell
-$env:PYTHONPATH = "$PWD\models\model-1-lulc-urban-growth;$PWD\models\model-2-property-valuation\src;$PWD\models\model-3-smart-root-optimizer"
-pytest models/ -v
+# Run pytest directly from repository root
+pytest
+# Or with verbose details:
+pytest -v
 ```
 **36 test suites covering all three models execute with zero failures.**
 
