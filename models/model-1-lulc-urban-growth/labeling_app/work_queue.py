@@ -39,6 +39,7 @@ PRIMARY_LANDSAT_BBOX = {
 }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
 REPO_ROOT = os.path.dirname(BASE_DIR)
 
 # Cached double interpretation IDs
@@ -47,25 +48,49 @@ _DOUBLE_INTERPRETATION_CACHE = {}
 def get_double_interpretation_ids(dataset: str = "t1") -> set:
     """
     Retrieves the authoritative set of sample IDs designated for double-interpretation
-    from the Phase 6 Interpreter B kits.
+    from data/double_interpretation_ids.json, existing storage, or Phase 6 Interpreter B kits.
     """
     global _DOUBLE_INTERPRETATION_CACHE
     safe_ds = "gold" if dataset == "gold" else "t1"
     if safe_ds in _DOUBLE_INTERPRETATION_CACHE:
         return _DOUBLE_INTERPRETATION_CACHE[safe_ds]
 
-    zip_name = "phase6_gold_kit_INTERPRETER_B.zip" if safe_ds == "gold" else "phase6_T1v2_kit_INTERPRETER_B.zip"
-    csv_name = "gold_form_interpreter_B.csv" if safe_ds == "gold" else "T1v2_form_interpreter_B.csv"
-    zip_path = os.path.join(REPO_ROOT, "phase6", "data", zip_name)
-
     ids = set()
-    if os.path.exists(zip_path):
+
+    # 1. Primary source: permanent authoritative JSON reference in data directory
+    json_path = os.path.join(DATA_DIR, "double_interpretation_ids.json")
+    if os.path.exists(json_path):
         try:
-            with zipfile.ZipFile(zip_path, "r") as zf:
-                df = pd.read_csv(io.BytesIO(zf.read(csv_name)))
-                ids = set(df["anon_id"].dropna().astype(str).tolist())
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                ids = set(data.get(safe_ds, []))
         except Exception as e:
-            print(f"Warning: could not read {zip_name}: {e}")
+            print(f"Warning: could not read {json_path}: {e}")
+
+    # 2. Secondary fallback: check legacy zip kits if present
+    if not ids:
+        zip_name = "phase6_gold_kit_INTERPRETER_B.zip" if safe_ds == "gold" else "phase6_T1v2_kit_INTERPRETER_B.zip"
+        csv_name = "gold_form_interpreter_B.csv" if safe_ds == "gold" else "T1v2_form_interpreter_B.csv"
+        zip_path = os.path.join(REPO_ROOT, "phase6", "data", zip_name)
+
+        if os.path.exists(zip_path):
+            try:
+                with zipfile.ZipFile(zip_path, "r") as zf:
+                    df = pd.read_csv(io.BytesIO(zf.read(csv_name)))
+                    ids = set(df["anon_id"].dropna().astype(str).tolist())
+            except Exception as e:
+                print(f"Warning: could not read {zip_name}: {e}")
+
+    # 3. Tertiary fallback: inspect existing persistent work queue in storage
+    if not ids:
+        q_path = os.path.join(BASE_DIR, "storage", f"work_queue_{safe_ds}.json")
+        if os.path.exists(q_path):
+            try:
+                with open(q_path, "r", encoding="utf-8") as f:
+                    q_data = json.load(f)
+                    ids = {q["anon_id"] for q in q_data.get("queue", []) if q.get("is_double_interpretation")}
+            except Exception as e:
+                print(f"Warning: could not read {q_path}: {e}")
 
     _DOUBLE_INTERPRETATION_CACHE[safe_ds] = ids
     return ids
@@ -177,9 +202,14 @@ def build_work_queue(manifest: list, annotations: dict, dataset: str = "t1") -> 
                 done_epochs.append(ep)
                 epoch_progress[ep_str]["done"] += 1
                 conf = ann.get("confidence_1to3")
-                if conf in confidence_counts:
-                    confidence_counts[conf] += 1
-                if conf in [1, 2]:
+                conf_int = None
+                try:
+                    conf_int = int(conf) if conf is not None and conf != "" else None
+                except (ValueError, TypeError):
+                    pass
+                if conf_int in confidence_counts:
+                    confidence_counts[conf_int] += 1
+                if conf_int in [1, 2]:
                     has_low_conf = True
 
                 # Schema check
@@ -233,6 +263,11 @@ def build_work_queue(manifest: list, annotations: dict, dataset: str = "t1") -> 
                 priority_rank = 4
                 priority_code = "P4_perimeter_needs_gep"
                 action = "Perimeter sample (outside primary scene 147_047). Copy coords and inspect Google Earth Pro historical slider."
+
+        if has_schema_error:
+            action = f"Resolve schema validation error in saved epoch(s). {action}"
+        elif len(anomalies) > 0:
+            action = f"Review trajectory anomaly ({anomalies[0]['type']}). {action}"
 
         priority_counts[priority_code] += 1
 

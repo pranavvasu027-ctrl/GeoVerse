@@ -80,13 +80,17 @@ def validate_epoch_annotation(epoch, data):
                 f"Epoch {epoch}: Notes are mandatory when dominant_class is '{dom}'."
             )
 
-    # If definite class, share bin is required
+    # Share bin validation: mandatory for definite classes, validated if present for any class
+    share = data.get("dominant_share_3bins", "")
     if dom in DEFINITE_CLASSES:
-        share = data.get("dominant_share_3bins", "")
         if share not in SHARE_BINS:
             errors.append(f"Epoch {epoch}: dominant_share_3bins '{share}' is invalid. Allowed: {SHARE_BINS}")
+    elif share and share not in SHARE_BINS:
+        errors.append(f"Epoch {epoch}: dominant_share_3bins '{share}' is invalid. Allowed: {SHARE_BINS}")
 
-        conf = data.get("confidence_1to3")
+    # Confidence validation: mandatory for definite classes, validated if present for any class
+    conf = data.get("confidence_1to3")
+    if dom in DEFINITE_CLASSES:
         try:
             conf_int = int(conf)
             if conf_int not in CONFIDENCE_LEVELS:
@@ -95,13 +99,23 @@ def validate_epoch_annotation(epoch, data):
                 warnings.append(f"Epoch {epoch}: Label has weak confidence (1). Consider re-checking.")
         except (ValueError, TypeError):
             errors.append(f"Epoch {epoch}: confidence_1to3 is required and must be an integer (1, 2, or 3).")
+    elif conf is not None and conf != "":
+        try:
+            conf_int = int(conf)
+            if conf_int not in CONFIDENCE_LEVELS:
+                errors.append(f"Epoch {epoch}: confidence '{conf}' must be 1, 2, or 3.")
+            elif conf_int == 1:
+                warnings.append(f"Epoch {epoch}: Label has weak confidence (1). Consider re-checking.")
+        except (ValueError, TypeError):
+            errors.append(f"Epoch {epoch}: confidence '{conf}' must be an integer (1, 2, or 3).")
 
-        sec = data.get("second_class", "none")
-        if sec and sec != "none":
-            if sec not in DEFINITE_CLASSES:
-                errors.append(f"Epoch {epoch}: second_class '{sec}' not in allowed definite classes.")
-            elif sec == dom:
-                errors.append(f"Epoch {epoch}: second_class '{sec}' cannot be identical to dominant_class.")
+    # Second class validation: must be definite class and cannot equal dominant class
+    sec = data.get("second_class", "none")
+    if sec and sec != "none":
+        if sec not in DEFINITE_CLASSES:
+            errors.append(f"Epoch {epoch}: second_class '{sec}' not in allowed definite classes.")
+        elif sec == dom:
+            errors.append(f"Epoch {epoch}: second_class '{sec}' cannot be identical to dominant_class.")
 
     # Validate imagery source
     src = data.get("imagery_source", "")

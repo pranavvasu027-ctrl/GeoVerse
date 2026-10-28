@@ -2,52 +2,52 @@
   "summary": {
     "dataset": "t1",
     "total_samples": 699,
-    "updated_at_utc": "2026-10-21T08:40:20.023856+00:00",
+    "updated_at_utc": "2026-10-28T18:33:33.110932+00:00",
     "categories": {
-      "unannotated_samples": 698,
-      "partially_annotated_samples": 1,
-      "completed_samples": 0,
+      "unannotated_samples": 696,
+      "partially_annotated_samples": 2,
+      "completed_samples": 1,
       "samples_with_suitable_historical_imagery": 662,
       "samples_with_unavailable_imagery": 0,
-      "low_confidence_annotations": 1,
-      "samples_requiring_independent_review": 140,
-      "invalid_or_inconsistent_records": 0
+      "low_confidence_annotations": 2,
+      "samples_requiring_independent_review": 141,
+      "invalid_or_inconsistent_records": 1
     },
     "progress_by_status": {
-      "unlabeled": 698,
-      "in_progress": 1,
-      "completed": 0
+      "unlabeled": 696,
+      "in_progress": 2,
+      "completed": 1
     },
     "progress_by_epoch": {
       "2020": {
+        "done": 3,
+        "unavailable": 0,
+        "skipped": 0,
+        "unlabeled": 696
+      },
+      "2000": {
         "done": 1,
         "unavailable": 0,
         "skipped": 0,
         "unlabeled": 698
       },
-      "2000": {
-        "done": 0,
-        "unavailable": 0,
-        "skipped": 0,
-        "unlabeled": 699
-      },
       "2010": {
-        "done": 0,
+        "done": 1,
         "unavailable": 0,
         "skipped": 0,
-        "unlabeled": 699
+        "unlabeled": 698
       },
       "1990": {
-        "done": 0,
+        "done": 1,
         "unavailable": 0,
         "skipped": 0,
-        "unlabeled": 699
+        "unlabeled": 698
       }
     },
     "progress_by_confidence": {
       "1": 0,
-      "2": 1,
-      "3": 0
+      "2": 2,
+      "3": 4
     },
     "progress_by_imagery_availability": {
       "primary_landsat_suitable": 662,
@@ -55,43 +55,20 @@
       "unavailable_flagged": 0
     },
     "priority_breakdown": {
-      "P1_unannotated_primary_landsat": 529,
+      "P1_unannotated_primary_landsat": 528,
       "P2_double_interpretation_pending": 140,
-      "P3_in_progress_partial": 1,
-      "P4_perimeter_needs_gep": 29,
-      "P5_completed_ready_for_audit": 0
+      "P3_in_progress_partial": 2,
+      "P4_perimeter_needs_gep": 28,
+      "P5_completed_ready_for_audit": 1
     },
     "inside_primary_landsat_count": 662,
     "perimeter_count": 37,
     "double_interpretation_total": 140,
-    "ready_for_immediate_labeling": 669,
-    "in_progress": 1,
-    "completed": 0
+    "ready_for_immediate_labeling": 668,
+    "in_progress": 2,
+    "completed": 1
   },
   "queue": [
-    {
-      "anon_id": "T2-0003",
-      "lat": 18.5073272251924,
-      "lon": 73.9633423078491,
-      "priority_rank": 1,
-      "priority_code": "P1_unannotated_primary_landsat",
-      "status": "unlabeled",
-      "inside_primary_landsat": true,
-      "is_double_interpretation": false,
-      "completed_epochs_count": 0,
-      "completed_epochs": [],
-      "remaining_epochs": [
-        2020,
-        2000,
-        2010,
-        1990
-      ],
-      "has_low_confidence": false,
-      "has_unavailable_imagery": false,
-      "has_inconsistency": false,
-      "anomalies": [],
-      "recommended_action": "Unannotated sample with full in-browser Landsat Collection 2 coverage. Ready to label."
-    },
     {
       "anon_id": "T2-0004",
       "lat": 18.536251126212512,
@@ -15476,32 +15453,33 @@
       ],
       "has_low_confidence": true,
       "has_unavailable_imagery": false,
-      "has_inconsistency": false,
+      "has_inconsistency": true,
       "anomalies": [],
-      "recommended_action": "Complete remaining epochs: [2000, 2010, 1990]."
+      "recommended_action": "Resolve schema validation error in saved epoch(s). Complete remaining epochs: [2000, 2010, 1990]."
     },
     {
-      "anon_id": "T2-0001",
-      "lat": 18.148434002727196,
-      "lon": 75.08688357746135,
-      "priority_rank": 4,
-      "priority_code": "P4_perimeter_needs_gep",
-      "status": "unlabeled",
-      "inside_primary_landsat": false,
+      "anon_id": "T2-0003",
+      "lat": 18.5073272251924,
+      "lon": 73.9633423078491,
+      "priority_rank": 3,
+      "priority_code": "P3_in_progress_partial",
+      "status": "in_progress",
+      "inside_primary_landsat": true,
       "is_double_interpretation": false,
-      "completed_epochs_count": 0,
-      "completed_epochs": [],
+      "completed_epochs_count": 1,
+      "completed_epochs": [
+        2020
+      ],
       "remaining_epochs": [
-        2020,
         2000,
         2010,
         1990
       ],
-      "has_low_confidence": false,
+      "has_low_confidence": true,
       "has_unavailable_imagery": false,
       "has_inconsistency": false,
       "anomalies": [],
-      "recommended_action": "Perimeter sample (outside primary scene 147_047). Copy coords and inspect Google Earth Pro historical slider."
+      "recommended_action": "Complete remaining epochs: [2000, 2010, 1990]."
     },
     {
       "anon_id": "T2-0022",
@@ -16146,6 +16124,29 @@
       "has_inconsistency": false,
       "anomalies": [],
       "recommended_action": "Perimeter sample (outside primary scene 147_047). Copy coords and inspect Google Earth Pro historical slider."
+    },
+    {
+      "anon_id": "T2-0001",
+      "lat": 18.148434002727196,
+      "lon": 75.08688357746135,
+      "priority_rank": 5,
+      "priority_code": "P5_completed_ready_for_audit",
+      "status": "completed",
+      "inside_primary_landsat": false,
+      "is_double_interpretation": false,
+      "completed_epochs_count": 4,
+      "completed_epochs": [
+        2020,
+        2000,
+        2010,
+        1990
+      ],
+      "remaining_epochs": [],
+      "has_low_confidence": false,
+      "has_unavailable_imagery": false,
+      "has_inconsistency": false,
+      "anomalies": [],
+      "recommended_action": "All 4 epochs labeled. Ready for quality-control audit."
     }
   ]
 }

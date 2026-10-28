@@ -177,9 +177,14 @@ def compute_qc_stats(manifest: list, annotations: dict, annotations_b: dict = No
                     class_distribution[dom] += 1
                 
                 conf = ann.get("confidence_1to3")
-                if conf in confidence_distribution:
-                    confidence_distribution[conf] += 1
-                if conf in [1, 2]:
+                conf_int = None
+                try:
+                    conf_int = int(conf) if conf is not None and conf != "" else None
+                except (ValueError, TypeError):
+                    pass
+                if conf_int in confidence_distribution:
+                    confidence_distribution[conf_int] += 1
+                if conf_int in [1, 2]:
                     low_confidence_count += 1
                 
                 src = ann.get("imagery_source", "")

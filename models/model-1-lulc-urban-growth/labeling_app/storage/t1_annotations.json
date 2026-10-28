@@ -13,5 +13,65 @@
         "notes": ""
       }
     }
+  },
+  "T2-0001": {
+    "updated_at": "2026-10-28T17:57:04.735903+00:00",
+    "epochs": {
+      "1990": {
+        "status": "done",
+        "dominant_class": "water",
+        "dominant_share_3bins": ">=75",
+        "second_class": "none",
+        "confidence_1to3": 3,
+        "imagery_source": "GEP_historical",
+        "imagery_date": "1991-12-18",
+        "notes": ""
+      },
+      "2000": {
+        "status": "done",
+        "dominant_class": "water",
+        "dominant_share_3bins": ">=75",
+        "second_class": "none",
+        "confidence_1to3": 3,
+        "imagery_source": "GEP_historical",
+        "imagery_date": "2001-11-03",
+        "notes": ""
+      },
+      "2010": {
+        "status": "done",
+        "dominant_class": "water",
+        "dominant_share_3bins": ">=75",
+        "second_class": "none",
+        "confidence_1to3": 3,
+        "imagery_source": "GEP_historical",
+        "imagery_date": "2011-12-17",
+        "notes": ""
+      },
+      "2020": {
+        "status": "done",
+        "dominant_class": "water",
+        "dominant_share_3bins": ">=75",
+        "second_class": "none",
+        "confidence_1to3": 3,
+        "imagery_source": "GEP_historical",
+        "imagery_date": "2021-12-28",
+        "notes": ""
+      }
+    }
+  },
+  "T2-0003": {
+    "updated_at": "2026-10-28T18:33:33.093176+00:00",
+    "epochs": {
+      "2020": {
+        "status": "done",
+        "dominant_class": "uncertain",
+        "dominant_share_3bins": ">=75",
+        "second_class": "none",
+        "confidence_1to3": 2,
+        "imagery_source": "Landsat_context",
+        "imagery_date": "2021-12-28",
+        "notes": ""
+      }
+    }
   }
 }

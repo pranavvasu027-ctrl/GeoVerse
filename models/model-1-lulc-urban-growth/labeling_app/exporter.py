@@ -47,6 +47,9 @@ def export_to_standard_csv(manifest_path: str, annotations_data: dict, output_cs
     rows = []
     rejected_records = []
     
+    manifest_id_set = {item["anon_id"] for item in manifest}
+    unmanifested_ids = sorted([aid for aid in annotations_data if aid not in manifest_id_set])
+
     summary = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "total_samples": len(manifest),
@@ -58,6 +61,7 @@ def export_to_standard_csv(manifest_path: str, annotations_data: dict, output_cs
         "unlabeled": 0,
         "unlabeled_samples": 0,
         "duplicate_manifest_ids": [],
+        "unmanifested_annotation_ids": unmanifested_ids,
         "validation_errors_count": 0,
         "rejected_records": [],
         "is_complete_final_dataset": False
@@ -130,15 +134,19 @@ def export_to_standard_csv(manifest_path: str, annotations_data: dict, output_cs
     summary["is_complete_final_dataset"] = (
         summary["fully_labeled_samples"] == len(manifest) and
         summary["validation_errors_count"] == 0 and
-        len(duplicate_ids) == 0
+        len(duplicate_ids) == 0 and
+        len(unmanifested_ids) == 0
     )
 
-    # Backup existing export file if present
+    # Backup existing export file and sidecar report if present
     if os.path.exists(output_csv_path):
         ts = time.time_ns()
         bak_dir = os.path.join(os.path.dirname(output_csv_path), "backups")
         os.makedirs(bak_dir, exist_ok=True)
         shutil.copy2(output_csv_path, os.path.join(bak_dir, f"export_backup_{ts}.csv"))
+        existing_report = os.path.splitext(output_csv_path)[0] + "_validation_report.json"
+        if os.path.exists(existing_report):
+            shutil.copy2(existing_report, os.path.join(bak_dir, f"export_validation_report_backup_{ts}.json"))
 
     # Write CSV
     df = pd.DataFrame(rows, columns=EXPORT_COLUMNS)

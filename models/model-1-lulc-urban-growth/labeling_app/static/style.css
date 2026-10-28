@@ -670,3 +670,18 @@ select:focus, input[type="text"]:focus, textarea:focus {
   background: #1e293b;
   color: var(--text-muted);
 }
+
+.historical-pill.loading {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.historical-pill.perimeter {
+  border-color: #f59e0b;
+  color: #fde047;
+}
+
+.epoch-panel.active-panel {
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
