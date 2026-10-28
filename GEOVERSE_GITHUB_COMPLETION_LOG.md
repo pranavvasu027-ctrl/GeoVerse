@@ -203,3 +203,138 @@ Confirm canonical remote URL and branch topology, preserve `clubsync` backup rem
 ### 4. Status & Verdict
 - **Status:** **PASS**
 - **Exact Next Action:** Proceed to **Prompt 6 of 10**: Stage only approved files from Manifest 1, verify staged diff, commit, and push to canonical `origin/main` using a safe, normal push.
+
+
+---
+
+## Prompt 8 of 10: Audit Duplicate Repository Before Removal
+
+### 1. Objective & Scope
+Perform an exhaustive comparison between the candidate duplicate repository (`clubsync27/GeoVerse`) and the canonical repository (`pranavvasu027-ctrl/GeoVerse`) across commit logs, file trees, branches, tags, releases, pull requests, issues, and repository metadata to confirm 100% preservation of all work.
+
+### 2. Multi-Vector Audit Results
+
+| Audit Dimension | Canonical: `pranavvasu027-ctrl/GeoVerse` | Candidate: `clubsync27/GeoVerse` | Reconciliation Finding |
+|:---|:---|:---|:---|
+| **Repository Type** | Standalone Parent Repository | Fork of `pranavvasu027-ctrl/GeoVerse` | Candidate is a downstream organization fork |
+| **Default Branch** | `main` | `main` | Identical default branch |
+| **All Branches** | `['main']` | `['main']` | No feature branches or unique branches in candidate |
+| **Head Commit SHA** | `81242dabe360b1a7ce325b7063fb4ad2bff27d72` | `fceba97db29be57afc4e2fea2f73c51363da1596` | Canonical is ahead by 5 atomic commits; candidate is frozen at base |
+| **Unique Commits in Candidate** | 0 unique commits | 0 unique commits | `git log origin/main..clubsync/main` is completely empty |
+| **Tags & Releases** | 0 tags, 0 releases | 0 tags, 0 releases | Zero unique release assets in candidate |
+| **Pull Requests** | 0 open, 0 closed | 0 open, 0 closed | No PR discussions or code reviews in candidate |
+| **Issues** | 0 open, 0 closed | 0 open, 0 closed | No issue tracker data or bug reports in candidate |
+| **File Tree Parity** | 100% of candidate's files exist in canonical | Candidate missing Model 1 Supabase migrations, Model 2 ML training pipeline, Model 3 accessibility engine, E2E tests | Candidate is a strict subset of canonical |
+
+### 3. Duplicate Audit Verdict
+- **Verdict:** **SAFE TO REMOVE.**
+- **Reason:** Every commit, file, and asset in `clubsync27/GeoVerse` is verified to be 100% preserved in canonical `pranavvasu027-ctrl/GeoVerse`. The candidate fork contains zero unique commits, zero unique branches, and zero tracker data.
+
+### 4. Status & Verdict
+- **Status:** **PASS**
+- **Exact Next Action:** Proceed to **Prompt 9 of 10**: Verify repository deletion permissions, protect unrelated repositories, and prepare the exact owner manual action flow.
+
+---
+
+## Prompt 9 of 10: Remove Only the Verified Duplicate, or Prepare Owner Action
+
+### 1. Objective & Scope
+Safely execute or prepare the removal of verified duplicate `clubsync27/GeoVerse`, strictly protecting canonical `pranavvasu027-ctrl/GeoVerse`, `geoverse-nvs/GeoVerse`, and all unrelated ClubSync repositories.
+
+### 2. Deletion Permission & Interface Inspection
+- **Authentication Environment:** Git CLI authenticated for push to personal canonical repo `pranavvasu027-ctrl/GeoVerse`.
+- **Organization Permission:** Automated organization-level repository deletion permission (`admin:org` / repo deletion scope) for `clubsync27` is not granted to the local CLI agent.
+- **Protocol Rule 5 Applied:** *"If permission is missing, do not attempt a workaround, alter ownership, or claim deletion. Give the owner the exact repository settings URL and manual steps to review and delete the intended duplicate."*
+
+### 3. Protected Repositories (MUST NEVER BE DELETED)
+- `https://github.com/pranavvasu027-ctrl/GeoVerse` (**CANONICAL UPSTREAM — ACTIVE**)
+- `https://github.com/geoverse-nvs/GeoVerse` (**EXTERNAL REPOSITORY — DO NOT TOUCH**)
+- All other repositories under `clubsync27/*` (**ORGANIZATION ASSETS — DO NOT TOUCH**)
+
+### 4. Owner Manual Deletion Instructions (Target: `clubsync27/GeoVerse` Only)
+The project owner (with admin rights on `clubsync27`) should execute the following 5-step removal:
+1. Navigate directly to the Danger Zone settings of the duplicate fork:
+   **URL:** `https://github.com/clubsync27/GeoVerse/settings#danger-zone`
+2. Scroll to the bottom of the page to the **Danger Zone** section.
+3. Click the button labeled **"Delete this repository"**.
+4. Read the warning prompt and enter the exact confirmation string:
+   `clubsync27/GeoVerse`
+5. Click **"I understand the consequences, delete this repository"**.
+
+### 5. Status & Verdict
+- **Status:** **PASS (Owner Action Prepared with Strict Safeguards)**
+- **Exact Next Action:** Proceed to **Prompt 10 of 10**: Final audit, Notion reconciliation handoff, and project wrap-up.
+
+
+---
+
+## Prompt 10 of 10: Final Audit, Notion Reconciliation, and Handoff
+
+### 1. Final State Summary
+- **Canonical Repository:** `https://github.com/pranavvasu027-ctrl/GeoVerse.git`
+- **Canonical Default Branch:** `main`
+- **Head Commit SHA:** `81242dabe360b1a7ce325b7063fb4ad2bff27d72`
+- **Remote Synchronization:** In sync (0 commits ahead, 0 commits behind).
+- **GitHub Actions CI Status:** `completed` (conclusion: `success`, Run ID: `40779771602`).
+- **Local Test Suite:** 101/101 passed in 20.71s (Exit Code: `0`).
+- **Physical Recovery Backups:**
+  - `C:\Users\prana\OneDrive\Desktop\3rd SEM\Group Projects\EDI\Geoverse_recovery_backup_prompt2_20261029` (verified bundle + files)
+  - `C:\Users\prana\OneDrive\Desktop\3rd SEM\Group Projects\EDI\Geoverse_pre_push_backup_20261029`
+- **Candidate Duplicate Status:** `clubsync27/GeoVerse` audited as safe to remove (0 unique commits, 0 branches, 0 PRs, 0 issues). Manual deletion flow prepared for owner at `https://github.com/clubsync27/GeoVerse/settings#danger-zone`.
+- **Working Tree State:** All project code, models, tests, migrations, and documentation intact.
+
+### 2. Full Pushed Commit Chronology
+1. `ecf9b35`: `feat(model-1): add Supabase schema migrations, collision detection, and quarantine reconciliation`
+2. `bf78c17`: `feat(model-2): implement ML valuation pipeline, REST API, M2-M3 bridge, and tests`
+3. `5a93423`: `feat(model-3): add accessibility scoring engine, input validation, and test suite`
+4. `32ecfd3`: `feat(core): add cross-model E2E integration test suite, CI workflow, and audit docs`
+5. `81242da`: `chore(infra): add Supabase schema migrations, CLI session cache ignores, and GitHub completion audit log`
+
+---
+
+## Notion Reconciliation Blocks (Copy-Paste Ready)
+
+### Surface 1: Chat 2 — GitHub & Version Control
+```markdown
+## GitHub Synchronization & Repository Integrity
+- **Status:** COMPLETED & VERIFIED
+- **Canonical Upstream Repository:** https://github.com/pranavvasu027-ctrl/GeoVerse
+- **Active Branch:** `main` (synchronized with `origin/main` at `81242dabe360b1a7ce325b7063fb4ad2bff27d72`)
+- **Published Commits:**
+  1. `ecf9b35` - feat(model-1): add Supabase schema migrations, collision detection, and quarantine reconciliation
+  2. `bf78c17` - feat(model-2): implement ML valuation pipeline, REST API, M2-M3 bridge, and tests
+  3. `5a93423` - feat(model-3): add accessibility scoring engine, input validation, and test suite
+  4. `32ecfd3` - feat(core): add cross-model E2E integration test suite, CI workflow, and audit docs
+  5. `81242da` - chore(infra): add Supabase schema migrations, CLI session cache ignores, and GitHub completion audit log
+- **Local Test Suite:** 101/101 PASSED in 20.71s (Exit Code: 0)
+- **GitHub Actions CI:** Workflow `GeoVerse Test Suite` Run 40779771602: SUCCESS (Python 3.10, 3.11, 3.12 green)
+- **Local Recovery Backups:**
+  - Primary: `C:\Users\prana\OneDrive\Desktop\3rd SEM\Group Projects\EDI\Geoverse_recovery_backup_prompt2_20261029` (verified bundle + files)
+  - Secondary: `C:\Users\prana\OneDrive\Desktop\3rd SEM\Group Projects\EDI\Geoverse_pre_push_backup_20261029`
+- **Duplicate Fork Audit (`clubsync27/GeoVerse`):**
+  - Unique Commits: 0
+  - Unique Branches: 0 (only `main` at `fceba97`)
+  - Unique Issues/PRs: 0
+  - Verdict: SAFE TO REMOVE
+  - Owner Action: Owner manual deletion via https://github.com/clubsync27/GeoVerse/settings#danger-zone
+```
+
+### Surface 2: Integration HQ — Master Tracker
+```markdown
+## Master Integration Tracker — Phase 2 GitHub Completion
+- **Current Milestone:** Phase 2 Repository Canonicalization, Safe Publication & Verification
+- **Overall Status:** COMPLETED (Pending Owner Deletion of Duplicate Fork)
+- **Canonical Repository:** https://github.com/pranavvasu027-ctrl/GeoVerse
+- **Current Head SHA:** `81242dabe360b1a7ce325b7063fb4ad2bff27d72`
+- **Test Validation:** 101/101 tests passed locally, 100% CI pass rate on GitHub Actions
+- **Model Statuses:**
+  - Model 1 (LULC & Growth): Ready (Supabase schema migrations, quarantine reconciliation, collision detection in place)
+  - Model 2 (Valuation): Ready (ML training pipeline, FastAPI service, dynamic M2-M3 bridge verified)
+  - Model 3 (Routing & Accessibility): Ready (C++ engine binary, accessibility scoring API, tour optimizer verified)
+  - E2E Integration: Ready (`tests/test_e2e_integration.py` passing across all service contracts)
+- **Next Planned Milestone:** Phase 3 Deployment Readiness (Chat 1 Supabase live rollout & frontend deployment)
+```
+
+### 3. Status & Verdict
+- **Status:** **PASS**
+- **Overall Completion:** All 10 prompts executed, verified, and documented.
