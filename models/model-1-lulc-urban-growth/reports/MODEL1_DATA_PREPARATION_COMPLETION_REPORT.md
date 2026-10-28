@@ -135,3 +135,37 @@ The following human actions are required to advance the project to model trainin
 **Final classification: D. PARTIALLY READY.** The app's local infrastructure is operational and its isolated suite now passes 26 tests. This audit added a fail-closed dataset boundary: invalid dataset names cannot silently write into T1, unknown sample IDs are rejected, empty annotation submissions are rejected, and storage/queue writes use atomic replacement with collision-resistant backup names.
 
 What remains blocked: (1) a fresh read finds only one partial, provenance-unverified T1 epoch record and no Gold records; (2) no local full-district Zarr feature cube exists; and (3) live historical-imagery service verification was blocked by DNS failure. No annotations, manifests, or evaluator keys were altered; no model was trained; no external data was downloaded; no commit or push occurred. The immediate human actions are to verify the four configured STAC scenes and actual sample footprints with network access, capture protocol-required human provenance and independent review, freeze valid labels, then run the documented feature-cube workflow on adequate infrastructure.
+
+---
+
+## 2026-10-28 Comprehensive Audit & Completion Addendum
+
+**Auditor:** Antigravity Pair-Programming Agent  
+**Environment:** Python 3.14.0 (Windows), pytest-9.1.1  
+**Test Suite Outcome:** **35 / 35 automated tests pass (100% pass rate in 1.89s)**  
+**Overall Training Status:** **STRICTLY BLOCKED (NO-GO)**
+
+### Verified Actions & Structural Enhancements:
+1. **Permanent Double-Interpretation Reference (`data/double_interpretation_ids.json`):**
+   - Extracted and version-controlled the authoritative set of 140 T1 and 160 Gold sample IDs designated for independent double interpretation.
+   - Updated `labeling_app/work_queue.py` to prioritize this permanent reference, preventing silent drop of double-interpretation assignments across server restarts and queue synchronizations.
+2. **Hardened Schema Validation (`labeling_app/schema.py`):**
+   - Repaired validation bypass for abstention classes: `dominant_share_3bins`, `confidence_1to3`, and `second_class` are now strictly validated whenever provided, preventing malformed data entry on `ambiguous` or `uncertain` classes.
+   - Enforced mandatory explanatory notes on both `other` and `ambiguous`.
+3. **Data Integrity & Reconciliation Guard (`labeling_app/exporter.py`):**
+   - Added unmanifested sample ID detection in CSV export (`unmanifested_annotation_ids`), failing dataset completeness if rogue IDs exist.
+   - Preserved sidecar report history with automated collision-resistant backups in `exports/backups/`.
+   - Re-exported `t1_annotated_export.csv` with updated validation report truthfully documenting the 1 schema error present in `T2-0002` (missing notes).
+4. **Actionable Work Queue Diagnostics (`labeling_app/work_queue.py`):**
+   - Samples flagged with schema validation errors now explicitly alert annotators in `recommended_action`: `"Resolve schema validation error in saved epoch(s)..."`.
+   - Coerced confidence levels to integer in both `qc.py` and `work_queue.py` for numerical consistency.
+5. **Human Annotation Workflow & UI Accessibility (`app.py`, `app.js`, `index.html`):**
+   - Enriched `/api/manifest` endpoint with `is_double_interpretation` and `inside_primary_landsat` flags.
+   - Added sidebar badges (`[2x]` and `[GEP]`) and dropdown filters (`Double Review Subset`, `Perimeter (Needs GEP)`) to streamline human labeling.
+6. **Automated Preflight Training Guards (`labeling_app/readiness.py` & `/api/readiness`):**
+   - Created a standalone fail-closed 8-gate readiness evaluation system (`python -m labeling_app.readiness`).
+   - Training is programmatically refused (`PermissionError`) unless all gates pass and explicit user instruction approval is provided.
+7. **Planetary Computer STAC Live Verification:**
+   - Successfully verified live HTTP 200 responses and cloud cover metrics for all 4 historical scenes (1991 Landsat 5 TM: 0.0%, 2001 Landsat 7 ETM+: 0.0%, 2011 Landsat 7 ETM+: 0.0%, 2021 Landsat 9 OLI-2: 5.77%).
+
+**Final Verdict:** Local data-preparation pipeline and human-in-the-loop tooling are fully verified, hardened, and test-covered (35/35 tests pass). Model training remains strictly **BLOCKED** pending human reference interpretation and remote feature cube computation.

@@ -62,3 +62,17 @@ models/model-1-lulc-urban-growth/labeling_app/storage/backups/*
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Serialized Machine Learning model checkpoints
+*.joblib
+
+# Export and report backup snapshots
+models/model-1-lulc-urban-growth/labeling_app/exports/backups/
+models/model-1-lulc-urban-growth/reports/backups/
+
+# Transient migration dry-run execution outputs
+final_dry_run_*.json
+
+# Gold holdout evaluation exports (preserved locally, holdout boundary)
+models/model-1-lulc-urban-growth/labeling_app/exports/gold_annotated_export.csv
+models/model-1-lulc-urban-growth/labeling_app/exports/gold_annotated_export_validation_report.json
