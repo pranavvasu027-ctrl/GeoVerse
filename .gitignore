@@ -76,3 +76,7 @@ final_dry_run_*.json
 # Gold holdout evaluation exports (preserved locally, holdout boundary)
 models/model-1-lulc-urban-growth/labeling_app/exports/gold_annotated_export.csv
 models/model-1-lulc-urban-growth/labeling_app/exports/gold_annotated_export_validation_report.json
+
+# Supabase CLI local temporary session caches
+supabase/.temp/
+supabase/.branches/
