@@ -1,4 +1,6 @@
 #!/bin/bash
-echo "Compiling C++ Engine for Linux..."
-g++ main.cpp Graph.cpp -o RouteOptimizer_Web -O3
-echo "Compilation complete!"
+set -e
+echo "Compiling C++ Engine for Linux/POSIX..."
+g++ -O3 -std=c++17 src/main.cpp src/Graph.cpp -I src -o RouteOptimizer_Web
+chmod +x RouteOptimizer_Web
+echo "Compilation complete! Binary: ./RouteOptimizer_Web"

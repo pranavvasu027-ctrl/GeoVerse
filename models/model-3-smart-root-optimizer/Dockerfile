@@ -1,4 +1,4 @@
-﻿# Use an official Python runtime as a parent image
+# Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
 # Install g++ compiler for C++ engine
@@ -13,8 +13,8 @@ COPY . /app
 # Install Python dependencies (Flask and Gunicorn)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Compile C++ Engine natively for Linux (-O2 with C++17) and grant execution permissions
-RUN g++ -O2 -std=c++17 main.cpp Graph.cpp -o RouteOptimizer_Web && chmod +x RouteOptimizer_Web
+# Compile C++ Engine natively for Linux (-O3 with C++17) and grant execution permissions
+RUN g++ -O3 -std=c++17 src/main.cpp src/Graph.cpp -I src -o RouteOptimizer_Web && chmod +x RouteOptimizer_Web
 
 # Expose default port
 EXPOSE 10000

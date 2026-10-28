@@ -20,6 +20,7 @@ An enterprise-grade, high-performance multimodal transit route optimization and 
    - ⚡ **Fastest Route**: Minimizes transit delay and transfer overhead.
    - 🍃 **Eco-Friendly Route**: Minimizes total carbon footprint emissions.
    - 🌧️ **Dynamic Weather Penalty**: Integrates live Open-Meteo API to penalize open-air transport (Autos/Buses) during rain.
+   - 🚦 **Simulated Traffic Heuristics**: Clearly documented heuristic multipliers simulating peak-hour congestion (distinguished from measured sensor feeds).
 
 4. **Doorstep / First-Mile Spatial Connector**:
    - If the traveler's GPS location is not an exact transit station, the spatial engine automatically computes a first-mile connector:
@@ -48,16 +49,19 @@ models/model-3-smart-root-optimizer/
 │   ├── CustomDS.h              # Custom Vector, HashMap, and MinHeap data structures
 │   ├── Graph.h                 # Graph interface, KD-Tree node, Edge & RouteResult structs
 │   ├── Graph.cpp               # A* search, KD-Tree spatial lookup, Held-Karp TSP DP
-│   └── main.cpp                # Native C++ headless CLI & JSON serialization engine
+│   ├── main.cpp                # Native C++ headless CLI & JSON serialization engine
+│   └── accessibility.py        # Accessibility indicator & travel-time bridge to Model 2
 ├── data/
 │   ├── locations.csv           # 63 Pune/PCMC transit nodes with GPS coordinates
 │   └── pune_map.csv            # Fully connected multimodal graph edges
 ├── tests/
 │   └── test_routing.py         # Automated pytest suite for routing and graph integrity
-├── CMakeLists.txt              # CMake build configuration
-├── build.sh                    # Linux build script (g++ -O3)
+├── CMakeLists.txt              # CMake build configuration (references src/*.cpp)
+├── Makefile                    # Cross-platform Makefile (Windows / Linux)
+├── build.bat                   # Windows MinGW / GCC build script
+├── build.sh                    # Linux / POSIX build script (g++ -O3)
 ├── Dockerfile                  # Containerized deployment specification
-├── RouteOptimizer_Web.exe      # Pre-compiled high-performance Windows binary (-O3)
+├── RouteOptimizer_Web.exe      # Pre-compiled Windows PE binary (-O3)
 ├── RouteOptimizer.exe          # Mirror binary
 ├── server.py                   # Flask REST microservice & live weather adapter
 ├── requirements.txt            # Python dependencies (Flask, gunicorn)
@@ -67,20 +71,43 @@ models/model-3-smart-root-optimizer/
 ├── GEOVERSE_COMPATIBILITY_REPORT.md # Technical compatibility & integration analysis
 └── PATENT_SPECIFICATION.md     # Algorithmic patent draft
 ```
-├── static/
-│   ├── app.js              # Leaflet mapping, Live Navigation, TSP HUD, First-Mile UI
-│   └── style.css           # Clean modern dashboard UI styles
-├── templates/
-│   └── index.html          # Frontend web layout & navigation controls
-├── docs/
-│   ├── PATENT_SPECIFICATION.md  # Formal provisional patent disclosure draft
-│   ├── PRESENTATION_SCRIPT.md   # Viva & evaluation presentation walkthrough
-│   ├── FUTURE_ADVANCEMENTS.md   # Technical roadmap & future expansion scope
-│   └── PROJECT_CONTEXT.md       # Architectural notes & implementation context
-└── scripts/
-    ├── expand_network.py   # Dataset expansion & station verification utility
-    └── add_bus_stations.py # Edge generation & connectivity verification script
+
+---
+
+## 🛠️ Build and Compilation Instructions
+
+### Platform Portability Note
+The pre-compiled binary `RouteOptimizer_Web.exe` is a 64-bit Windows executable. To deploy on Linux/macOS environments:
+- **Build with Make:** Run `make` to compile native binary `./RouteOptimizer_Web`.
+- **Build with Shell Script:** Run `bash build.sh`.
+- **Build with CMake:** Run `cmake -B build && cmake --build build`.
+- **Build with Docker:** Run `docker build -t geoverse-model3 .`.
+
+### Windows Recompilation:
+```cmd
+build.bat
 ```
+Or with GCC directly:
+```cmd
+g++ -O3 -std=c++17 src/main.cpp src/Graph.cpp -I src -o RouteOptimizer_Web.exe
+copy /Y RouteOptimizer_Web.exe RouteOptimizer.exe
+```
+
+### Linux / POSIX Recompilation:
+```bash
+bash build.sh
+```
+Or using Make:
+```bash
+make
+```
+
+### Graceful Fallback Behavior
+When running without the compiled C++ binary:
+1. `GET /api/health` indicates `"status": "degraded"` and `"binary_available": false`.
+2. `POST /api/nearest` falls back to in-process spherical Haversine computation against `locations.csv`.
+3. `POST /api/route` returns HTTP 503 with actionable compilation guidance.
+4. `src/accessibility.py` provides pure-Python Haversine distance heuristics for transit access scores.
 
 ---
 
@@ -100,20 +127,11 @@ Ensure Python 3.8+ and GCC (g++) are installed.
    pip install -r requirements.txt
    ```
 
-2. **(Optional) Recompile the C++ Engine**:
-   ```bash
-   # Windows (MinGW / GCC)
-   g++ -O3 -std=c++17 main.cpp Graph.cpp -o RouteOptimizer_Web.exe
-
-   # Linux / macOS
-   g++ -O3 -std=c++17 main.cpp Graph.cpp -o RouteOptimizer_Web
-   ```
-
-3. **Start the Web Server**:
+2. **Start the Web Server**:
    ```bash
    python server.py
    ```
-4. Open http://127.0.0.1:5000 in your browser.
+3. Open `http://127.0.0.1:5000` in your browser.
 
 ---
 
@@ -130,4 +148,4 @@ Ensure Python 3.8+ and GCC (g++) are installed.
 ---
 
 ## 📜 Intellectual Property & Patent Draft
-A complete formal patent disclosure has been documented under `docs/PATENT_SPECIFICATION.md`, detailing the technical novelty of combining real-time spatial first-mile feeder discovery with weather-penalized multimodal routing and microsecond Held-Karp TSP itinerary scheduling on bare-metal custom data structures.
+A complete formal patent disclosure has been documented under `PATENT_SPECIFICATION.md`, detailing the technical novelty of combining real-time spatial first-mile feeder discovery with weather-penalized multimodal routing and microsecond Held-Karp TSP itinerary scheduling on bare-metal custom data structures.
