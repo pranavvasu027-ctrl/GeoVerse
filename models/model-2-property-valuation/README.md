@@ -1,10 +1,11 @@
 # Model 2: Property Valuation & Urban Spatial Analytics
 
 ## 1. Overview
-Model 2 predicts real-estate valuation and future price trajectories across key micro-markets in the Pune Metropolitan Region. It combines:
+Model 2 predicts real-estate valuation and evaluates scenario impacts across key micro-markets in the Pune Metropolitan Region. It combines:
 1. **Real geospatial indicator layers** (distances to Metro stations, major highways, IT parks, and OpenStreetMap Points of Interest).
 2. **Infrastructure scoring** derived from empirical accessibility parameters.
-3. **Property transaction records and market price estimation models** (XGBoost / Random Forest regression with SHAP explainability).
+3. **Property valuation regressor & scenario analyzer** (Random Forest regression with 95% confidence intervals and what-if simulation).
+4. **Multimodal transit accessibility bridge** interfacing with Model 3 travel-time networks.
 
 ---
 
@@ -14,15 +15,21 @@ models/model-2-property-valuation/
 ├── README.md
 ├── requirements.txt
 ├── src/
+│   ├── real_geo_data.py        # Verified WGS-84 coordinates for localities, metro, IT hubs, highways
 │   ├── data_processing.py      # End-to-end dataset builder (Stage A real + Stage B synthetic)
-│   └── real_geo_data.py        # Verified coordinates for localities, metro stations, IT hubs
+│   ├── valuation_model.py      # Scikit-learn Pipeline, time-consistent split, scenario comparison
+│   ├── api.py                  # Flask REST API microservice for property valuation
+│   └── accessibility_client.py # Client bridge querying Model 3 transit travel times
 ├── data/
 │   ├── raw/
 │   │   └── localities_real.csv # Verified Pune locality metrics & infrastructure scores
-│   └── processed/
-│       └── master_training_data.csv # Master feature table for ML training (312 KB)
+│   ├── processed/
+│   │   └── master_training_data.csv # Master feature table for ML training (1,260 rows)
+│   └── model_checkpoint.joblib # Serialized model checkpoint & validation metrics
+├── reports/
+│   └── MODEL_2_PROGRESS_AUDIT.md # Comprehensive progress audit report
 └── tests/
-    └── test_model2.py          # Automated test suite for geospatial math and schemas
+    └── test_model2.py          # Automated test suite (12 unit and integration tests)
 ```
 
 ---
@@ -45,6 +52,12 @@ This produces:
 - `data/processed/properties_synthetic.csv` (Property records)
 - `data/processed/master_training_data.csv` (Time-consistent master dataset for model training)
 
+### Run API Microservice
+```bash
+python src/api.py
+```
+Starts Flask service on `http://127.0.0.1:5000` (or configured port).
+
 ### Run Tests
 ```bash
 pytest tests/test_model2.py -v
@@ -52,7 +65,23 @@ pytest tests/test_model2.py -v
 
 ---
 
-## 4. Data Provenance & Ethics Specification
+## 4. API Endpoints Specification
+
+| Method | Endpoint | Description | Status |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/v1/health` | Health check, model version, and holdout evaluation metrics | Verified |
+| `GET` | `/api/v1/localities` | List verified Pune micro-markets and geospatial anchors | Verified |
+| `POST` | `/api/v1/predict` | Predict single property valuation with 95% confidence intervals | Verified |
+| `POST` | `/api/v1/compare-scenarios` | Evaluate what-if scenarios (e.g. Metro extension, renovation, area expansion) | Verified |
+
+### Prediction Target & Units
+- **Primary Target:** `price` (Total property valuation in Indian Rupees, INR, ₹).
+- **Secondary Target:** `price_per_sqft` (Price per square foot, ₹/sq.ft.).
+- **Evaluation Strategy:** Strict chronological split (Train: years $\le 2023$, Test: year $2024$) to prevent future lookahead leakage.
+
+---
+
+## 5. Data Provenance & Ethics Specification
 
 This section exists so nobody (including you, a reviewer, or a future contributor) mistakes synthetic data for real transaction records.
 
@@ -78,7 +107,7 @@ This section exists so nobody (including you, a reviewer, or a future contributo
 
 ### Why this design is still meaningful for ML
 
-The synthetic fields are **not random noise disconnected from reality** — price growth is deliberately driven by real geospatial features (distance to metro/IT hub, POI density). This means ML models will learn genuine, explainable relationships between **real location characteristics** and price/growth outcomes (e.g. through SHAP values). It also means the pipeline is a drop-in replacement target: swap `properties_synthetic.csv` / `property_history_synthetic.csv` for a real licensed dataset later, and everything downstream keeps working.
+The synthetic fields are **not random noise disconnected from reality** — price growth is deliberately driven by real geospatial features (distance to metro/IT hub, POI density). This means ML models will learn genuine, explainable relationships between **real location characteristics** and price/growth outcomes. It also means the pipeline is a drop-in replacement target: swap `properties_synthetic.csv` / `property_history_synthetic.csv` for a real licensed dataset later, and everything downstream keeps working.
 
 ### To replace with real data later
 
