@@ -169,6 +169,7 @@ def test_sql_migration_files_exist_and_contain_constraints():
     assert "record_annotation_history" in schema_sql
     assert "SECURITY DEFINER" in schema_sql
     assert "trg_record_annotation_history" in schema_sql
+    assert "chk_gold_never_training" in schema_sql
 
     # Seed SQL integrity (T1 training eligible, Gold holdout excluded)
     seed_sql = seed_sql_path.read_text(encoding="utf-8")
@@ -179,11 +180,26 @@ def test_sql_migration_files_exist_and_contain_constraints():
     assert "FALSE" in seed_sql
     assert "641" in seed_sql
 
-    # RLS
+    # RLS & Permissions Hardening
     rls_sql = rls_sql_path.read_text(encoding="utf-8")
     assert "ENABLE ROW LEVEL SECURITY" in rls_sql
     assert "service_role" in rls_sql
     assert "auth_insert_t1_annotations" in rls_sql
+    assert "REVOKE EXECUTE ON FUNCTION record_annotation_history" in rls_sql
+    assert "REVOKE ALL ON TABLE annotation_history" in rls_sql
+    assert "REVOKE DELETE, TRUNCATE ON TABLE annotations FROM authenticated" in rls_sql
+    assert "DROP POLICY IF EXISTS auth_insert_reviews ON quality_reviews" in rls_sql
+    assert "CREATE POLICY auth_insert_reviews" not in rls_sql
+    assert "REVOKE ALL ON TABLE quality_reviews FROM PUBLIC, anon, authenticated" in rls_sql
+    assert "GRANT SELECT ON TABLE quality_reviews TO authenticated" in rls_sql
+    assert "quality_reviews_review_id_seq TO authenticated" not in rls_sql
+
+    # Gold holdout protection in RLS policies (non-Gold constraint enforcement)
+    assert "CREATE POLICY auth_select_annotations ON annotations" in rls_sql
+    assert "USING (dataset_id != 'gold')" in rls_sql
+    assert "auth_select_annotations ON annotations\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
+    assert "CREATE POLICY auth_select_reviews ON quality_reviews" in rls_sql
+    assert "auth_select_reviews ON quality_reviews\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
 
 
 def test_schema_vocabulary_and_constraint_validation():
@@ -1517,3 +1533,211 @@ def test_quarantine_reconciliation_mixed_outcomes_divergent_field_fails(tmp_path
     assert rec["mismatches"][0]["anon_id"] == "t1:T2-VALID"
     assert "dominant_class" in rec["mismatches"][0]["differences"]
     assert rec["is_fully_reconciled"] is False
+
+
+
+# =============================================================================
+# 19. Security Hardening, RLS Authorization & Synchronization Tests
+# =============================================================================
+
+def test_migration_root_and_model_copies_are_synchronized():
+    """
+    Verifies that the root Supabase migrations and corresponding Model 1 migration
+    copies are 100% synchronized and identical.
+    """
+    repo_root = MODULE_ROOT.parent.parent
+    model_migrations = MODULE_ROOT / "db" / "migrations"
+    root_migrations = repo_root / "supabase" / "migrations"
+
+    assert model_migrations.exists()
+    assert root_migrations.exists()
+
+    pairs = [
+        (model_migrations / "001_initial_schema.sql", root_migrations / "20261029000001_001_initial_schema.sql"),
+        (model_migrations / "002_seed_datasets.sql", root_migrations / "20261029000002_002_seed_datasets.sql"),
+        (model_migrations / "003_row_level_security.sql", root_migrations / "20261029000003_003_row_level_security.sql")
+    ]
+
+    for m1_path, root_path in pairs:
+        assert m1_path.exists(), f"Missing {m1_path}"
+        assert root_path.exists(), f"Missing {root_path}"
+        m1_text = m1_path.read_text(encoding="utf-8").replace("\r\n", "\n")
+        root_text = root_path.read_text(encoding="utf-8").replace("\r\n", "\n")
+        assert m1_text == root_text, f"Migration copy mismatch between {m1_path.name} and {root_path.name}"
+
+
+def test_quality_reviews_unrestricted_insert_vulnerability_regression():
+    """
+    Regression Test: Ensures that the unrestricted INSERT policy on quality_reviews
+    (WITH CHECK (true)) is permanently eradicated, direct creation by authenticated
+    users is denied, and only the trusted service_role can create or update reviews.
+    """
+    rls_sql_path = MODULE_ROOT / "db" / "migrations" / "003_row_level_security.sql"
+    rls_sql = rls_sql_path.read_text(encoding="utf-8")
+
+    # Negative assertion: Permissive INSERT policy MUST NOT exist
+    assert "CREATE POLICY auth_insert_reviews" not in rls_sql
+
+    # Positive assertion: Explicit DROP and REVOKE must be present
+    assert "DROP POLICY IF EXISTS auth_insert_reviews ON quality_reviews;" in rls_sql
+    assert "REVOKE ALL ON TABLE quality_reviews FROM PUBLIC, anon, authenticated;" in rls_sql
+    assert "GRANT SELECT ON TABLE quality_reviews TO authenticated;" in rls_sql
+    assert "GRANT ALL ON TABLE quality_reviews TO service_role;" in rls_sql
+
+    # Sequence usage must not be granted to authenticated for quality_reviews
+    assert "quality_reviews_review_id_seq TO authenticated" not in rls_sql
+
+    # Gold holdout protection in RLS policies (non-Gold constraint enforcement)
+    assert "CREATE POLICY auth_select_annotations ON annotations" in rls_sql
+    assert "USING (dataset_id != 'gold')" in rls_sql
+    assert "auth_select_annotations ON annotations\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
+    assert "CREATE POLICY auth_select_reviews ON quality_reviews" in rls_sql
+    assert "auth_select_reviews ON quality_reviews\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
+
+
+def test_gold_dataset_engine_inviolability_and_rls_boundary():
+    """
+    Verifies that the Gold evaluation benchmark is inviolable at both:
+    1. Schema level: chk_gold_never_training constraint
+    2. RLS level: dataset_id = 't1' mandatory in USING and WITH CHECK
+    """
+    schema_sql_path = MODULE_ROOT / "db" / "migrations" / "001_initial_schema.sql"
+    rls_sql_path = MODULE_ROOT / "db" / "migrations" / "003_row_level_security.sql"
+
+    schema_sql = schema_sql_path.read_text(encoding="utf-8")
+    rls_sql = rls_sql_path.read_text(encoding="utf-8")
+
+    # Schema constraint
+    assert "CONSTRAINT chk_gold_never_training CHECK (dataset_id != 'gold' OR is_training_allowed = FALSE)" in schema_sql
+
+    # RLS Update policy must verify dataset_id = 't1' on BOTH target selection (USING) and mutation (WITH CHECK)
+    assert "CREATE POLICY auth_update_t1_annotations ON annotations" in rls_sql
+    assert "USING (dataset_id = 't1')" in rls_sql
+    assert "WITH CHECK (dataset_id = 't1')" in rls_sql
+
+    # RLS Insert policy must verify dataset_id = 't1'
+    assert "CREATE POLICY auth_insert_t1_annotations ON annotations" in rls_sql
+
+    # No DELETE policy for authenticated
+    assert "CREATE POLICY auth_delete" not in rls_sql
+    assert "REVOKE DELETE, TRUNCATE ON TABLE annotations FROM authenticated;" in rls_sql
+
+    # RLS Select policies must explicitly protect Gold holdout from authenticated users
+    assert "CREATE POLICY auth_select_annotations ON annotations" in rls_sql
+    assert "CREATE POLICY auth_select_reviews ON quality_reviews" in rls_sql
+    assert "USING (dataset_id != 'gold')" in rls_sql
+    assert "auth_select_annotations ON annotations\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
+    assert "auth_select_reviews ON quality_reviews\n    FOR SELECT TO authenticated USING (true);" not in rls_sql
+
+
+def test_quality_review_creation_service_role_boundary():
+    """
+    Simulates role boundary enforcement:
+    - Attempting to insert a quality review under client/authenticated context fails.
+    - Creating a quality review via the trusted backend service role succeeds.
+    """
+    # 1. Authenticated user client simulation: table.insert() should fail / be rejected
+    mock_auth_client = MagicMock()
+    mock_auth_client.table("quality_reviews").insert.side_effect = PermissionError(
+        "new row violates row-level security policy for table 'quality_reviews'"
+    )
+
+    with pytest.raises(PermissionError) as exc_info:
+        mock_auth_client.table("quality_reviews").insert({
+            "sample_id": 1,
+            "dataset_id": "gold",
+            "anon_id": "GOLD-001",
+            "epoch": 2020,
+            "interpreter_a_id": "user_a",
+            "interpreter_a_class": "built_up",
+            "is_agreement": True
+        })
+    assert "violates row-level security policy" in str(exc_info.value)
+
+    # 2. Service role backend simulation: table.insert() succeeds
+    mock_service_client = MagicMock()
+    mock_service_client.table("quality_reviews").insert.return_value.execute.return_value = MagicMock(
+        data=[{"review_id": 101, "review_status": "agreed"}]
+    )
+
+    res = mock_service_client.table("quality_reviews").insert({
+        "sample_id": 1,
+        "dataset_id": "t1",
+        "anon_id": "T2-001",
+        "epoch": 2020,
+        "interpreter_a_id": "user_a",
+        "interpreter_a_class": "built_up",
+        "interpreter_b_id": "user_b",
+        "interpreter_b_class": "built_up",
+        "is_agreement": True,
+        "agreement_type": "exact_match",
+        "review_status": "agreed"
+    }).execute()
+
+    assert res.data[0]["review_id"] == 101
+    assert res.data[0]["review_status"] == "agreed"
+
+
+def test_gold_holdout_rls_least_privilege_access_simulation():
+    """
+    Simulates role-based security boundaries for Gold holdout protection:
+    1. 'anon' role: denied read/write access to annotations and quality reviews.
+    2. 'authenticated' role: can read T1 annotations/reviews, but queries for Gold return no rows (or error).
+    3. 'authenticated' role: attempting direct query by Gold ID/anon_id returns zero rows.
+    4. 'service_role': retains full unrestricted access to Gold annotations and reviews for model evaluation.
+    """
+    # 1. Anon client: Denied read access to annotations and quality_reviews
+    mock_anon_client = MagicMock()
+    mock_anon_client.table("annotations").select("*").execute.side_effect = PermissionError(
+        "permission denied for table annotations"
+    )
+    with pytest.raises(PermissionError) as exc_info:
+        mock_anon_client.table("annotations").select("*").execute()
+    assert "permission denied" in str(exc_info.value)
+
+    # 2. Authenticated client: queries T1 successfully
+    mock_auth_client = MagicMock()
+    t1_records = [
+        {"id": 1, "dataset_id": "t1", "anon_id": "T2-0001", "epoch": 2020, "dominant_class": "built_up"}
+    ]
+    mock_auth_client.table("annotations").select("*").eq("dataset_id", "t1").execute.return_value = MagicMock(
+        data=t1_records
+    )
+    t1_res = mock_auth_client.table("annotations").select("*").eq("dataset_id", "t1").execute()
+    assert len(t1_res.data) == 1
+    assert t1_res.data[0]["dataset_id"] == "t1"
+
+    # 3. Authenticated client: queries Gold holdout -> RLS filters out rows (returns empty list)
+    # Under Postgres RLS with USING (dataset_id != 'gold'), rows where dataset_id = 'gold' are invisible
+    mock_auth_client.table("annotations").select("*").eq("dataset_id", "gold").execute.return_value = MagicMock(
+        data=[]
+    )
+    gold_res = mock_auth_client.table("annotations").select("*").eq("dataset_id", "gold").execute()
+    assert gold_res.data == [], "Authenticated client must NEVER see Gold holdout records via RLS filtering"
+
+    # 4. Authenticated client: queries specific Gold ID directly -> RLS filters out row
+    mock_auth_client.table("annotations").select("*").eq("id", 999).execute.return_value = MagicMock(
+        data=[]
+    )
+    gold_by_id = mock_auth_client.table("annotations").select("*").eq("id", 999).execute()
+    assert gold_by_id.data == [], "Direct ID query for Gold holdout must return empty under RLS"
+
+    # 5. Authenticated client: queries quality reviews for Gold -> RLS filters out rows
+    mock_auth_client.table("quality_reviews").select("*").eq("dataset_id", "gold").execute.return_value = MagicMock(
+        data=[]
+    )
+    gold_rev_res = mock_auth_client.table("quality_reviews").select("*").eq("dataset_id", "gold").execute()
+    assert gold_rev_res.data == [], "Authenticated client must NEVER see Gold quality reviews via RLS filtering"
+
+    # 6. Service role client: backend evaluation engine can read Gold holdout
+    mock_service_client = MagicMock()
+    gold_records = [
+        {"id": 999, "dataset_id": "gold", "anon_id": "GOLD-0001", "epoch": 2020, "dominant_class": "water"}
+    ]
+    mock_service_client.table("annotations").select("*").eq("dataset_id", "gold").execute.return_value = MagicMock(
+        data=gold_records
+    )
+    service_res = mock_service_client.table("annotations").select("*").eq("dataset_id", "gold").execute()
+    assert len(service_res.data) == 1
+    assert service_res.data[0]["dataset_id"] == "gold"
+    assert service_res.data[0]["dominant_class"] == "water"

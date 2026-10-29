@@ -68,9 +68,11 @@ DROP POLICY IF EXISTS auth_select_samples ON samples;
 CREATE POLICY auth_select_samples ON samples
     FOR SELECT TO authenticated USING (true);
 
+-- Authenticated users can only read non-Gold annotations (Gold holdout strictly protected from ordinary annotators)
 DROP POLICY IF EXISTS auth_select_annotations ON annotations;
 CREATE POLICY auth_select_annotations ON annotations
-    FOR SELECT TO authenticated USING (true);
+    FOR SELECT TO authenticated
+    USING (dataset_id != 'gold');
 
 -- Authenticated users can insert/update T1 annotations
 DROP POLICY IF EXISTS auth_insert_t1_annotations ON annotations;
@@ -84,13 +86,50 @@ CREATE POLICY auth_update_t1_annotations ON annotations
     USING (dataset_id = 't1')
     WITH CHECK (dataset_id = 't1');
 
--- Authenticated users can read quality reviews
+-- Authenticated users can only read quality reviews for non-Gold datasets
 DROP POLICY IF EXISTS auth_select_reviews ON quality_reviews;
 CREATE POLICY auth_select_reviews ON quality_reviews
-    FOR SELECT TO authenticated USING (true);
+    FOR SELECT TO authenticated
+    USING (dataset_id != 'gold');
 
--- Authenticated users can insert quality reviews
+-- Disallow client-side direct creation of quality reviews.
+-- Quality reviews, arbitration, and double-interpretation concordance are generated
+-- strictly by the trusted server-side QC pipeline using service-role privileges.
 DROP POLICY IF EXISTS auth_insert_reviews ON quality_reviews;
-CREATE POLICY auth_insert_reviews ON quality_reviews
-    FOR INSERT TO authenticated
-    WITH CHECK (true);
+
+-- -----------------------------------------------------------------------------
+-- 4. Schema-Level & Table-Level Grants / Hardening (Defense-in-Depth)
+-- -----------------------------------------------------------------------------
+-- Object-level privileges reinforce RLS to prevent permission escalation.
+
+-- Function execution hardening (prevent direct invocation by untrusted roles)
+REVOKE EXECUTE ON FUNCTION record_annotation_history() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION record_annotation_history() TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION set_updated_at() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION set_updated_at() TO authenticated, service_role;
+
+-- Table privileges: Revoke modification privileges from public/anon
+REVOKE ALL ON TABLE annotation_history FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT ON TABLE annotation_history TO service_role;
+
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE datasets, samples FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE datasets, samples TO anon, authenticated;
+GRANT ALL ON TABLE datasets, samples TO service_role;
+
+REVOKE ALL ON TABLE annotations FROM PUBLIC, anon;
+REVOKE DELETE, TRUNCATE ON TABLE annotations FROM authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE annotations TO authenticated;
+GRANT ALL ON TABLE annotations TO service_role;
+
+-- Quality reviews: Read-only for authenticated users; modifications strictly restricted to service_role
+REVOKE ALL ON TABLE quality_reviews FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE quality_reviews TO authenticated;
+GRANT ALL ON TABLE quality_reviews TO service_role;
+
+-- Sequence usage for ID generation
+-- Sequence usage: authenticated users need ID generation sequence access ONLY for annotations.
+-- quality_reviews_review_id_seq is restricted to service_role.
+GRANT USAGE, SELECT ON SEQUENCE annotations_id_seq TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
