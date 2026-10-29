@@ -94,3 +94,38 @@ DROP POLICY IF EXISTS auth_insert_reviews ON quality_reviews;
 CREATE POLICY auth_insert_reviews ON quality_reviews
     FOR INSERT TO authenticated
     WITH CHECK (true);
+
+-- -----------------------------------------------------------------------------
+-- 4. Schema-Level & Table-Level Grants / Hardening (Defense-in-Depth)
+-- -----------------------------------------------------------------------------
+-- Object-level privileges reinforce RLS to prevent permission escalation.
+
+-- Function execution hardening (prevent direct invocation by untrusted roles)
+REVOKE EXECUTE ON FUNCTION record_annotation_history() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION record_annotation_history() TO authenticated, service_role;
+
+REVOKE EXECUTE ON FUNCTION set_updated_at() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION set_updated_at() TO authenticated, service_role;
+
+-- Table privileges: Revoke modification privileges from public/anon
+REVOKE ALL ON TABLE annotation_history FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT ON TABLE annotation_history TO service_role;
+
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE datasets, samples FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE datasets, samples TO anon, authenticated;
+GRANT ALL ON TABLE datasets, samples TO service_role;
+
+REVOKE ALL ON TABLE annotations FROM PUBLIC, anon;
+REVOKE DELETE, TRUNCATE ON TABLE annotations FROM authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE annotations TO authenticated;
+GRANT ALL ON TABLE annotations TO service_role;
+
+REVOKE ALL ON TABLE quality_reviews FROM PUBLIC, anon;
+REVOKE UPDATE, DELETE, TRUNCATE ON TABLE quality_reviews FROM authenticated;
+GRANT SELECT, INSERT ON TABLE quality_reviews TO authenticated;
+GRANT ALL ON TABLE quality_reviews TO service_role;
+
+-- Sequence usage for ID generation
+GRANT USAGE, SELECT ON SEQUENCE annotations_id_seq, quality_reviews_review_id_seq TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+

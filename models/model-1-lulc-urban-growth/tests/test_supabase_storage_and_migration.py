@@ -169,6 +169,7 @@ def test_sql_migration_files_exist_and_contain_constraints():
     assert "record_annotation_history" in schema_sql
     assert "SECURITY DEFINER" in schema_sql
     assert "trg_record_annotation_history" in schema_sql
+    assert "chk_gold_never_training" in schema_sql
 
     # Seed SQL integrity (T1 training eligible, Gold holdout excluded)
     seed_sql = seed_sql_path.read_text(encoding="utf-8")
@@ -179,11 +180,14 @@ def test_sql_migration_files_exist_and_contain_constraints():
     assert "FALSE" in seed_sql
     assert "641" in seed_sql
 
-    # RLS
+    # RLS & Permissions Hardening
     rls_sql = rls_sql_path.read_text(encoding="utf-8")
     assert "ENABLE ROW LEVEL SECURITY" in rls_sql
     assert "service_role" in rls_sql
     assert "auth_insert_t1_annotations" in rls_sql
+    assert "REVOKE EXECUTE ON FUNCTION record_annotation_history" in rls_sql
+    assert "REVOKE ALL ON TABLE annotation_history" in rls_sql
+    assert "REVOKE DELETE, TRUNCATE ON TABLE annotations FROM authenticated" in rls_sql
 
 
 def test_schema_vocabulary_and_constraint_validation():

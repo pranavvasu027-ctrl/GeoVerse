@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS datasets (
     is_training_allowed BOOLEAN NOT NULL DEFAULT FALSE,
     total_samples INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+    CONSTRAINT chk_gold_never_training CHECK (dataset_id != 'gold' OR is_training_allowed = FALSE)
 );
 
 COMMENT ON TABLE datasets IS 'Master registry of reference datasets. Enforces strict training vs evaluation separation.';
