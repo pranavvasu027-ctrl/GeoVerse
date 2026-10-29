@@ -4,7 +4,7 @@
 **Authoritative Local Repository:** `C:\Users\prana\OneDrive\Desktop\3rd SEM\Group Projects\EDI\Geoverse`
 **Canonical Remote Repository:** `https://github.com/pranavvasu027-ctrl/GeoVerse.git`
 **Target Branch:** `main`
-**Verified Base Canonical HEAD SHA:** `ef929f5707b97aaf4d2b4055a3df6bfaa0318098`
+**Verified Canonical HEAD SHA:** `7a816d9a6a35eef11cc080f4f3502224fe622eae`
 **Latest GitHub Actions CI Run:** `40845982867` (`completed`, `success` on Python 3.10, 3.11, 3.12)
 **Overall Deployment Readiness Verdict:** **`READY WITH BLOCKERS`**
 
@@ -12,13 +12,13 @@
 
 ## 1. Executive Summary
 
-GeoVerse27 has achieved code-complete status across its three analytical models (Model 1 LULC & Urban Growth, Model 2 Property Valuation, Model 3 Multimodal Transport & Accessibility) and its cross-model E2E integration test suite. All 101 automated tests pass cleanly both locally (Python 3.14.0) and remotely on GitHub Actions (Python 3.10, 3.11, 3.12 matrix).
+GeoVerse27 has achieved code-complete status across its three analytical models (Model 1 LULC & Urban Growth, Model 2 Property Valuation, Model 3 Multimodal Transport & Accessibility) and its cross-model E2E integration test suite. All 106 automated tests pass cleanly both locally (Python 3.14.0) and remotely on GitHub Actions (Python 3.10, 3.11, 3.12 matrix).
 
 However, **production deployment is not yet cleared**. The overall status is designated **`READY WITH BLOCKERS`** because while the analytical pipelines, C++ engines, and test suites are verified and functional, critical cloud infrastructure, containerization, CORS configuration, dependency pinning, and live database migrations require explicit owner actions and architectural staging prior to public release.
 
 ### Core Verdict Dimensions
 1. **Model & Algorithmic Integrity:** **READY** — All models execute deterministically with transparent data provenance, ethical holdouts (Gold benchmark isolated), and graceful offline fallbacks.
-2. **Automated Testing & CI:** **READY** — 101/101 automated tests pass with 0 failures, 0 skips, and 0 weakened assertions.
+2. **Automated Testing & CI:** **READY** — 106/106 automated tests pass with 0 failures, 0 skips, and 0 weakened assertions.
 3. **Database Architecture & Migrations:** **READY WITH BLOCKERS** — PostgreSQL DDL and RLS security migrations are validated and idempotent, but the live Supabase database instance has not been provisioned or migrated; local JSON storage remains active.
 4. **Cloud Infrastructure & Networking:** **NOT READY** — Missing CORS middleware across Flask services, hardcoded debug servers, localhost-only binding in Model 1, and absence of an ingress API gateway or reverse proxy.
 5. **Organization Fork Cleanup:** **PENDING OWNER ACTION** — Candidate duplicate `clubsync27/GeoVerse` audited as safe to remove, awaiting owner deletion in GitHub Danger Zone.
@@ -35,7 +35,7 @@ Every component has been inspected directly in the authoritative codebase and as
 | **Frontend: Model 3 Leaflet HUD** | `models/model-3-smart-root-optimizer/templates/index.html`<br>`static/app.js` | **Verified working** | Interactive Leaflet map with multimodal routing, waypoint controls, and live weather. Verified working locally. |
 | **Frontend: Unified Portal** | *Repository Root* | **Missing or failing** | No single unified web dashboard currently aggregates Model 1, 2, and 3 into one application. Each model runs an independent web interface. |
 | **Model 1: Ingestion & Storage Subsystem** | `models/model-1-lulc-urban-growth/labeling_app/storage.py` | **Verified working (JSON mode)** | Dual-backend architecture implemented. Default active backend is `json` (atomic writes + backups). Supabase backend implemented with collision detection. |
-| **Model 1: Supabase Python Dependency** | `models/model-1-lulc-urban-growth/requirements.txt` | **Missing or failing** | `supabase` Python package is imported dynamically in `storage.py` (line 307) but is **missing** from `requirements.txt`. Must be added before activating Supabase. |
+| **Model 1: Supabase Python Dependency** | `models/model-1-lulc-urban-growth/requirements.txt` | **Verified working** | `supabase>=2.0.0` is pinned in `requirements.txt` to allow clean environment installations for Supabase integration. |
 | **Model 1: Training Readiness Gate** | `models/model-1-lulc-urban-growth/labeling_app/readiness.py` | **Verified working (Fail-Closed)** | Correctly halts training (`overall_decision: BLOCKED`) because feature cube `pune_G30.zarr` is absent and reference labeling is incomplete. Working as designed. |
 | **Model 1: Planetary Computer STAC Tile Resolver** | `models/model-1-lulc-urban-growth/labeling_app/imagery.py` | **Verified working** | Resolves authentic Landsat Collection 2 Tier-1 tiles via Microsoft Planetary Computer STAC directly to client. No storage bucket needed. |
 | **Model 2: ML Valuation Pipeline** | `models/model-2-property-valuation/src/valuation_model.py` | **Verified working** | Random Forest pipeline with 95% prediction intervals. Auto-retrains from `master_training_data.csv` in < 2s if `model_checkpoint.joblib` is absent. |
@@ -72,6 +72,7 @@ The SQL migrations in `supabase/migrations/` (and mirrored in `models/model-1-lu
      - Restricts `annotations` modifications to `authenticated` users on `dataset_id = 't1'` only.
      - Strictly revokes `DELETE` and `TRUNCATE` privileges from `authenticated` users.
      - Protects `gold` dataset annotations from `anon` and `authenticated` visibility (`dataset_id != 'gold'`).
+     - **RLS Contradiction Resolution:** Audited and resolved policy contradiction where `auth_select_annotations` and `auth_select_reviews` previously allowed authenticated users to read Gold holdout annotations via `USING (true)`. Policies updated to `USING (dataset_id != 'gold')` and client insertion on `quality_reviews` eliminated. Verified by 32 tests in `test_supabase_storage_and_migration.py`.
 
 ### Supabase Safety Verdict
 - **Static Safety:** **PASSED** — Zero destructive `DROP TABLE` or `TRUNCATE` statements. Full RLS coverage, audit trigger immutability, and check constraints verified.
@@ -85,12 +86,12 @@ The SQL migrations in `supabase/migrations/` (and mirrored in `models/model-1-lu
 ### Fresh Local Test Suite Execution
 - **Command:** `python -m pytest -v`
 - **Environment:** Windows 11, Python 3.14.0, pytest 9.1.1
-- **Duration:** 39.30 seconds
+- **Duration:** 36.07 seconds
 - **Exit Code:** `0`
-- **Results:** **101 passed, 0 failed, 0 skipped (100% Pass Rate)**
+- **Results:** **106 passed, 0 failed, 0 skipped (100% Pass Rate)**
 
 ```text
-============================ 101 passed in 39.30s =============================
+============================ 106 passed in 36.07s =============================
 ```
 
 ### Dedicated Cross-Model E2E Integration Suite
@@ -171,8 +172,8 @@ The following environment variables must be configured in hosting environments. 
 To advance GeoVerse27 from **`READY WITH BLOCKERS`** to **`DEPLOYMENT READY`**, the following prioritized actions must be executed:
 
 ### Priority 1: Dependency & Networking Hardening (Automated / Engineer Action)
-1. **Add `supabase` to Model 1 Requirements:**
-   Update `models/model-1-lulc-urban-growth/requirements.txt` to include `supabase>=2.0.0` so that environments can install Supabase client bindings cleanly.
+1. **Add `supabase` to Model 1 Requirements (COMPLETED):**
+   `supabase>=2.0.0` pinned in `models/model-1-lulc-urban-growth/requirements.txt` and verified.
 2. **Implement CORS Headers:**
    Install `flask-cors` and attach `CORS(app, resources={r"/api/*": {"origins": allowed_origins}})` across Model 1, Model 2, and Model 3 to enable browser cross-origin requests.
 3. **Configure Dynamic `MODEL3_SERVICE_URL`:**

@@ -294,3 +294,31 @@ The organization administrator should execute the deletion manually:
 
 ### Overall Execution Verdict
 **ALL 10 PROMPTS EXECUTED, VERIFIED, AND RECONCILED. STATUS: PASS.**
+
+
+---
+
+## Phase 3 Completion: Gold Holdout RLS Security Fix, Dependency Pinning & Release Verification
+
+**Execution Date:** 2026-10-29
+**Canonical Repository:** `https://github.com/pranavvasu027-ctrl/GeoVerse.git`
+**Target Branch:** `main`
+**Latest Canonical Commit:** `7a816d9a6a35eef11cc080f4f3502224fe622eae`
+**Security Status:** ALL IDENTIFIED VULNERABILITIES RESOLVED
+**Test Suite Verdict:** 106/106 PASSED (100% Pass Rate, 0 failures, 0 skips)
+
+### Summary of Actions Executed
+1. **Gold Holdout RLS Security Remediation (Task 1):**
+   - **Audit Finding:** `auth_select_annotations` and `auth_select_reviews` previously allowed authenticated users to read Gold evaluation holdout annotations via permissive `USING (true)`, violating the benchmark privacy requirement.
+   - **Remediation:** Updated both policies in `models/model-1-lulc-urban-growth/db/migrations/003_row_level_security.sql` and `supabase/migrations/20261029000003_003_row_level_security.sql` to `USING (dataset_id != 'gold')`.
+   - **Privilege Hardening:** Dropped `auth_insert_reviews` policy and revoked sequence usage from authenticated roles to prevent client-side review injection; restricted quality reviews generation to `service_role`.
+2. **Automated Test Expansion & Least-Privilege Verification (Tasks 1 & 2):**
+   - Added static constraint assertions in `test_sql_migration_files_exist_and_contain_constraints` ensuring `dataset_id != 'gold'` is present and blanket `USING (true)` is prohibited.
+   - Added dedicated test `test_gold_holdout_rls_least_privilege_access_simulation` simulating role boundaries (`anon` denied, `authenticated` restricted to non-Gold, Gold direct queries returning empty via RLS, `service_role` retaining full evaluation access).
+   - Executed full test suite: **106 passed in 36.07s**.
+3. **Dependency Hardening (Task 4):**
+   - Pinned `supabase>=2.0.0` in `models/model-1-lulc-urban-growth/requirements.txt` to eliminate dynamic import failure risk upon Supabase activation.
+4. **Migration Non-Application Verification (Task 2):**
+   - Confirmed `GEOVERSE_STORAGE_BACKEND=json` remains active default in `labeling_app/storage.py`.
+   - Confirmed zero migrations were applied to live Supabase; zero database writes occurred.
+   - Confirmed migration engine (`labeling_app/migrate_annotations.py`) enforces strict operator confirmation (`--confirm`) and preserves source JSON hashes.
